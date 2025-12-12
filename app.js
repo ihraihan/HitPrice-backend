@@ -6,18 +6,20 @@ dotenv.config();
 
 const app = express();
 
-// middleware
+// Parse JSON (allow base64 images)
 app.use(express.json({ limit: "10mb" }));
 
-// routes
-app.use("/api/scan", scanRoutes);
-
+// Root route (for quick testing)
 app.get("/", (req, res) => {
-    res.send("HitPrice Backend Running");
+    res.send("HitPrice backend is running 🚀");
 });
 
-// start server
+// Scan route
+app.use("/api/scan", scanRoutes);
+
+// Get port from Railway, fallback to 3000 locally
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
