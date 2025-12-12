@@ -7,28 +7,25 @@ const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function analyzeImage(base64Image) {
+export async function analyzeImageFromUrl(imageUrl) {
     try {
-        const dataUri = base64Image.startsWith("data:")
-            ? base64Image
-            : `data:image/jpeg;base64,${base64Image}`;
-
         const response = await client.chat.completions.create({
             model: "gpt-4o",
+            temperature: 0,
             messages: [
                 {
                     role: "user",
                     content: [
                         {
-                            type: "input_image",
+                            type: "image_url",
                             image_url: {
-                                url: dataUri
+                                url: imageUrl
                             }
                         },
                         {
                             type: "text",
                             text: `
-Extract baseball card details. Return ONLY JSON with fields:
+Analyze this baseball card and return ONLY JSON:
 {
   "player": "",
   "year": "",
@@ -47,7 +44,7 @@ Extract baseball card details. Return ONLY JSON with fields:
         });
 
         const raw = response.choices[0].message.content;
-        console.log("OpenAI raw:", raw);
+        console.log("VISION RAW RESPONSE:", raw);
 
         return JSON.parse(raw);
 

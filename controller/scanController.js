@@ -1,28 +1,24 @@
-import { analyzeImage } from "../services/openaiService.js";
+import { analyzeImageFromUrl } from "../services/openaiService.js";
 
 export const scanCard = async (req, res) => {
     try {
-        const { image } = req.body;
+        const { image_url } = req.body;
 
-        if (!image) {
-            return res.status(400).json({ error: "Image missing" });
+        if (!image_url) {
+            return res.status(400).json({ error: "image_url missing" });
         }
 
-        // 1. Extract card details from OpenAI Vision
-        const cardData = await analyzeImage(image);
-
-        // 2. TEMP — No eBay yet (we add later)
-        const pricing = {
-            message: "Pricing not enabled yet",
-            low: null,
-            mid: null,
-            high: null
-        };
+        const cardData = await analyzeImageFromUrl(image_url);
 
         res.json({
             success: true,
             card: cardData,
-            pricing: pricing
+            pricing: {
+                message: "Pricing not added yet",
+                low: null,
+                mid: null,
+                high: null
+            }
         });
 
     } catch (error) {
