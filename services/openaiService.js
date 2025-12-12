@@ -43,6 +43,6 @@ export async function analyzeImage(base64Image) {
             confidence: parsed.confidence ?? 0
         };
     } catch (err) {
-        throw new Error("Failed to parse OpenAI response: " + err.message + " raw: " + text);
+        throw new Error("Failed to parse OpenAI response: " + " raw: " + text);
     }
 }

@@ -27,6 +27,6 @@ export const scanCard = async (req, res) => {
         });
     } catch (error) {
         console.error("SCAN ERROR", error);
-        res.status(500).json({ error: "Scan failed", details: error.message });
+        res.status(500).json({ error: "Scan failed" });
     }
 };
