@@ -7,34 +7,34 @@ const client = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function analyzeImage(base64Image) {
+// Analyze card using OpenAI Vision (BASE64 input)
+export async function analyzeImageBase64(base64Image) {
     try {
-        const dataUri = base64Image.startsWith("data:")
-            ? base64Image
-            : `data:image/jpeg;base64,${base64Image}`;
-
         const response = await client.chat.completions.create({
             model: "gpt-4o",
+            temperature: 0,
             messages: [
                 {
                     role: "user",
                     content: [
                         {
-                            type: "input_image",
+                            type: "image_url",
                             image_url: {
-                                url: dataUri
+                                url: `data:image/jpeg;base64,${base64Image}`
                             }
                         },
                         {
                             type: "text",
                             text: `
-Extract baseball card details. Return ONLY JSON with fields:
+You are a sports card recognition system.
+Extract the **exact card details** and return ONLY JSON:
+
 {
   "player": "",
   "year": "",
   "brand": "",
-  "card_number": "",
   "set_name": "",
+  "card_number": "",
   "variation": "",
   "grade": "",
   "confidence": 0.0
@@ -46,13 +46,13 @@ Extract baseball card details. Return ONLY JSON with fields:
             ]
         });
 
-        const raw = response.choices[0].message.content;
-        console.log("OpenAI raw:", raw);
+        const rawText = response.choices[0].message.content;
+        console.log("RAW OPENAI RESPONSE:", rawText);
 
-        return JSON.parse(raw);
+        return JSON.parse(rawText);
 
-    } catch (error) {
-        console.error("OpenAI Vision Error:", error);
+    } catch (err) {
+        console.error("OpenAI Vision Error:", err);
         throw new Error("OpenAI Vision failed");
     }
 }
