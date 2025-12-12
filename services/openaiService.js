@@ -2,7 +2,10 @@ import OpenAI from "openai";
 import dotenv from "dotenv";
 
 dotenv.config();
-const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const client = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function analyzeImage(base64Image) {
     try {
@@ -12,20 +15,20 @@ export async function analyzeImage(base64Image) {
 
         const response = await client.chat.completions.create({
             model: "gpt-4o",
-            temperature: 0,
             messages: [
                 {
                     role: "user",
                     content: [
                         {
-                            type: "image_url",
-                            image_url: dataUri
+                            type: "input_image",
+                            image_url: {
+                                url: dataUri
+                            }
                         },
                         {
                             type: "text",
                             text: `
-Analyze this baseball card and return ONLY a JSON object:
-
+Extract baseball card details. Return ONLY JSON with fields:
 {
   "player": "",
   "year": "",
@@ -36,8 +39,6 @@ Analyze this baseball card and return ONLY a JSON object:
   "grade": "",
   "confidence": 0.0
 }
-
-If unsure, leave the field empty.
 `
                         }
                     ]
@@ -46,7 +47,7 @@ If unsure, leave the field empty.
         });
 
         const raw = response.choices[0].message.content;
-        console.log("OpenAI raw response:", raw);
+        console.log("OpenAI raw:", raw);
 
         return JSON.parse(raw);
 
