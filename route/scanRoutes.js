@@ -1,8 +1,8 @@
-// routes/scanRoutes.js
 import express from "express";
-import { scanHandler } from "../controllers/scanController.js";
+import { scanCard } from "../controller/scanController.js";
 
 const router = express.Router();
-router.post("/scan", scanHandler);
+
+router.post("/", scanCard);
 
 export default router;
