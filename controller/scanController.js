@@ -1,6 +1,6 @@
 import { analyzeImage } from "../services/openaiService.js";
-import { getEbayPrices } from "../services/ebayService.js";
 
+// TEMPORARY: no eBay API yet
 export const scanCard = async (req, res) => {
     try {
         const { image } = req.body;
@@ -12,18 +12,21 @@ export const scanCard = async (req, res) => {
         // 1. Send image to OpenAI Vision
         const cardData = await analyzeImage(image);
 
-        // 2. Build eBay query (example)
-        const query = `${cardData.year} ${cardData.player} baseball card`;
-
-        // 3. Get prices
-        const prices = await getEbayPrices(query);
+        // 2. TEMPORARY MOCK PRICES
+        const prices = {
+            low: 10,
+            mid: 20,
+            high: 30,
+            message: "eBay pricing not implemented yet",
+        };
 
         res.json({
+            success: true,
             card: cardData,
             pricing: prices,
         });
-    } catch (err) {
-        console.error("SCAN ERROR:", err);
-        res.status(500).json({ error: "Scan failed", details: err.message });
+    } catch (error) {
+        console.error("SCAN ERROR", error);
+        res.status(500).json({ error: "Scan failed", details: error.message });
     }
 };
