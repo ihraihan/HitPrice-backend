@@ -1,20 +1,27 @@
-// services/priceUtils.js
-export function compactResults(items) {
-    const prices = items.map(i => i.price).filter(v => typeof v === "number" && v > 0);
-    if (!prices.length) return { avgPrice: 0, lowPrice: 0, highPrice: 0, medianPrice: 0, sampleSize: 0 };
+export function calculatePrices(items) {
+    const prices = items
+        .map(i => parseFloat(i.price?.value))
+        .filter(Boolean);
 
-    prices.sort((a, b) => a - b);
-    const sum = prices.reduce((s, v) => s + v, 0);
-    const avg = sum / prices.length;
-    const median = prices[Math.floor(prices.length / 2)];
-    const low = prices[0];
-    const high = prices[prices.length - 1];
+    if (prices.length === 0) return null;
 
     return {
-        avgPrice: Number(avg.toFixed(2)),
-        medianPrice: Number(median.toFixed(2)),
-        lowPrice: low,
-        highPrice: high,
-        sampleSize: prices.length
+        low: Math.min(...prices),
+        average: Number(
+            (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2)
+        ),
+        high: Math.max(...prices),
+        total_sales: prices.length
     };
+}
+
+export function buildHistory(items) {
+    return items.slice(0, 5).map(item => ({
+        title: item.title,
+        price: item.price?.value,
+        currency: item.price?.currency,
+        image: item.image?.imageUrl,
+        sold_date: item.itemEndDate,
+        ebay_url: item.itemWebUrl
+    }));
 }
