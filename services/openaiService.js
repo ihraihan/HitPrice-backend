@@ -17,9 +17,6 @@ export async function analyzeImageBase64(base64Image) {
     try {
         const mimeType = detectMimeType(base64Image);
 
-        console.log("Detected MIME:", mimeType);
-        console.log("Base64 length:", base64Image.length);
-
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             temperature: 0,
@@ -36,34 +33,29 @@ export async function analyzeImageBase64(base64Image) {
                         {
                             type: "text",
                             text: `
-You are a professional sports card recognition system.
-
-Extract visible baseball card data and return ONLY valid JSON:
-
-{
-  "player": "",
-  "year": "",
-  "brand": "",
-  "set_name": "",
-  "card_number": "",
-  "variation": "",
-  "grade": "",
-  "confidence": 0.0
-}
-`
+  Extract baseball card details.
+  Return ONLY valid JSON. No explanation.
+  `
                         }
                     ]
                 }
             ]
         });
 
-        const content = response.choices[0].message.content;
-        console.log("OpenAI RAW:", content);
+        const raw = response.choices[0].message.content;
+        console.log("OpenAI RAW:", raw);
 
-        return JSON.parse(content);
+        // ✅ FIX
+        const cleaned = raw
+            .replace(/```json/g, "")
+            .replace(/```/g, "")
+            .trim();
+
+        return JSON.parse(cleaned);
 
     } catch (error) {
-        console.error("OPENAI FULL ERROR:", error);
+        console.error("OPENAI ERROR:", error);
         throw new Error("OpenAI Vision failed");
     }
 }
+
