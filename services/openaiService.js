@@ -3,14 +3,24 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const client = new OpenAI({
+const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Analyze card using OpenAI Vision (BASE64 input)
+function detectMimeType(base64) {
+    if (base64.startsWith("/9j/")) return "image/jpeg";
+    if (base64.startsWith("iVBOR")) return "image/png";
+    return "image/jpeg"; // fallback
+}
+
 export async function analyzeImageBase64(base64Image) {
     try {
-        const response = await client.chat.completions.create({
+        const mimeType = detectMimeType(base64Image);
+
+        console.log("Detected MIME:", mimeType);
+        console.log("Base64 length:", base64Image.length);
+
+        const response = await openai.chat.completions.create({
             model: "gpt-4o",
             temperature: 0,
             messages: [
@@ -20,14 +30,15 @@ export async function analyzeImageBase64(base64Image) {
                         {
                             type: "image_url",
                             image_url: {
-                                url: `data:image/jpeg;base64,${base64Image}`
+                                url: `data:${mimeType};base64,${base64Image}`
                             }
                         },
                         {
                             type: "text",
                             text: `
-You are a sports card recognition system.
-Extract the **exact card details** and return ONLY JSON:
+You are a professional sports card recognition system.
+
+Extract visible baseball card data and return ONLY valid JSON:
 
 {
   "player": "",
@@ -46,13 +57,13 @@ Extract the **exact card details** and return ONLY JSON:
             ]
         });
 
-        const rawText = response.choices[0].message.content;
-        console.log("RAW OPENAI RESPONSE:", rawText);
+        const content = response.choices[0].message.content;
+        console.log("OpenAI RAW:", content);
 
-        return JSON.parse(rawText);
+        return JSON.parse(content);
 
-    } catch (err) {
-        console.error("OpenAI Vision Error:", err);
+    } catch (error) {
+        console.error("OPENAI FULL ERROR:", error);
         throw new Error("OpenAI Vision failed");
     }
 }
