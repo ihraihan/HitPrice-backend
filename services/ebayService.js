@@ -1,3 +1,6 @@
+import axios from "axios";
+import { getEbayAccessToken } from "./ebayAuthService.js"; // ✅ FIX
+
 export async function searchEbayCard(card) {
     const token = await getEbayAccessToken();
 
