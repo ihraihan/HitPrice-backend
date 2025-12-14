@@ -1,8 +1,7 @@
-import axios from "axios";
-import { getEbayAccessToken } from "./ebayAuthService.js";
-
 export async function searchEbayCard(card) {
     const token = await getEbayAccessToken();
+
+    console.log("EBAY TOKEN (first 20 chars):", token?.slice(0, 20));
 
     const query = `${card.player_name} ${card.card_brand} baseball card`;
 

@@ -20,6 +20,7 @@ export async function analyzeImageBase64(base64Image) {
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             temperature: 0,
+            max_tokens: 500, // ✅ add this
             messages: [
                 {
                     role: "user",
