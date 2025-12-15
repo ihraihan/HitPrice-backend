@@ -14,7 +14,9 @@ app.use(express.json({ limit: "10mb" }));
 app.get("/", (req, res) => {
     res.send("HitPrice backend is running 🚀");
 });
-
+app.get("/api/health", (req, res) => {
+    res.json({ ok: true });
+});
 // Scan route
 app.use("/api/scan", scanRoutes);
 // Baseball route
@@ -26,3 +28,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+
