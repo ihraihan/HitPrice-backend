@@ -1,37 +1,35 @@
 import { BASEBALL_SERIES } from "../data/baseballSeries.js";
-import {
-    searchEbayCategoryPreview,
-    searchEbayCardsByCategory,
-} from "../services/ebayService.js";
+import { discoverBaseballSetsByBrand, searchEbayCardsByCategory } from "../services/ebayService.js";
 
-// ✅ Categories (dynamic, live from eBay)
-export const getBaseballCategories = async (req, res) => {
+// 🔹 SERIES (Brand grid)
+export const getBaseballSeries = (req, res) => {
+    res.json({
+        success: true,
+        series: BASEBALL_SERIES,
+    });
+};
+
+// 🔹 SETS (dynamic years)
+export const getBaseballSets = async (req, res) => {
     try {
-        const results = [];
+        const { brand } = req.query;
 
-        for (const cat of BASEBALL_SERIES) {
-            const preview = await searchEbayCategoryPreview(cat.query);
-
-            results.push({
-                id: cat.id,
-                title: cat.title,
-                total: preview.total,
-                image: preview.image,
-            });
+        if (!brand) {
+            return res.status(400).json({ error: "Brand required" });
         }
 
-        return res.json({
+        const sets = await discoverBaseballSetsByBrand(brand);
+
+        res.json({
             success: true,
-            categories: results,
+            sets,
         });
     } catch (err) {
-        console.error("Categories error:", err.message);
-        return res.status(500).json({
-            success: false,
-            error: "Failed to load categories",
-        });
+        console.error("Sets error:", err);
+        res.status(500).json({ error: "Failed to load sets" });
     }
 };
+
 
 // ✅ Cards inside a category
 export const getBaseballCards = async (req, res) => {

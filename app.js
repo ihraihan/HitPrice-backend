@@ -14,9 +14,6 @@ app.use(express.json({ limit: "10mb" }));
 app.get("/", (req, res) => {
     res.send("HitPrice backend is running 🚀");
 });
-app.get("/api/health", (req, res) => {
-    res.json({ ok: true });
-});
 
 // Scan route
 app.use("/api/scan", scanRoutes);
