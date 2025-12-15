@@ -26,44 +26,7 @@ export async function searchEbayCard(card) {
     return response.data.itemSummaries || [];
 }
 
-export async function discoverBaseballSetsByBrand(brand) {
-    const token = await getEbayAccessToken();
 
-    const res = await axios.get(
-        "https://api.ebay.com/buy/browse/v1/item_summary/search",
-        {
-            headers: { Authorization: `Bearer ${token}` },
-            params: {
-                q: `${brand} baseball card`,
-                category_ids: "213",
-                limit: 50,
-            },
-        }
-    );
-
-    const setsMap = new Map();
-
-    for (const item of res.data.itemSummaries || []) {
-        const yearMatch = item.title.match(/\b(18|19|20)\d{2}\b/);
-        if (!yearMatch) continue;
-
-        const year = yearMatch[0];
-        const key = `${year}-${brand}`;
-
-        if (!setsMap.has(key)) {
-            setsMap.set(key, {
-                id: key,
-                title: `${year} ${brand}`,
-                year,
-                brand,
-                image: item.image?.imageUrl,
-                query: `${year} ${brand} baseball card`,
-            });
-        }
-    }
-
-    return [...setsMap.values()].sort((a, b) => b.year - a.year);
-}
 
 // 🔵 CATEGORY SEARCH (for Search screen grid)
 export async function searchEbayCategoryPreview(query) {
@@ -111,13 +74,16 @@ export async function searchEbayCardsByCategory(query) {
     return response.data.itemSummaries || [];
 }
 
+// ✅ KEEP THIS ONE
 export async function discoverBaseballSetsByBrand(brand) {
     const token = await getEbayAccessToken();
 
-    const res = await axios.get(
+    const response = await axios.get(
         "https://api.ebay.com/buy/browse/v1/item_summary/search",
         {
-            headers: { Authorization: `Bearer ${token}` },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
             params: {
                 q: `${brand} baseball card`,
                 category_ids: "213",
@@ -126,26 +92,6 @@ export async function discoverBaseballSetsByBrand(brand) {
         }
     );
 
-    const setsMap = new Map();
-
-    for (const item of res.data.itemSummaries || []) {
-        const yearMatch = item.title.match(/\b(18|19|20)\d{2}\b/);
-        if (!yearMatch) continue;
-
-        const year = yearMatch[0];
-        const key = `${year}-${brand}`;
-
-        if (!setsMap.has(key)) {
-            setsMap.set(key, {
-                id: key,
-                title: `${year} ${brand}`,
-                year,
-                brand,
-                image: item.image?.imageUrl,
-                query: `${year} ${brand} baseball card`,
-            });
-        }
-    }
-
-    return [...setsMap.values()].sort((a, b) => b.year - a.year);
+    return response.data.itemSummaries || [];
 }
+
