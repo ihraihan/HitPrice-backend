@@ -1,4 +1,4 @@
-import { BASEBALL_CATEGORIES } from "../data/baseballCategories.js";
+import { BASEBALL_SERIES } from "../data/baseballSeries.js";
 import {
     searchEbayCategoryPreview,
     searchEbayCardsByCategory,
@@ -9,7 +9,7 @@ export const getBaseballCategories = async (req, res) => {
     try {
         const results = [];
 
-        for (const cat of BASEBALL_CATEGORIES) {
+        for (const cat of BASEBALL_SERIES) {
             const preview = await searchEbayCategoryPreview(cat.query);
 
             results.push({
