@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import scanRoutes from "./route/scanRoutes.js";
+import baseballRoutes from "./route/baseballRoutes.js";
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.get("/", (req, res) => {
 
 // Scan route
 app.use("/api/scan", scanRoutes);
+// Baseball route
+app.use("/api/baseball", baseballRoutes);
 
 // Get port from Railway, fallback to 3000 locally
 const PORT = process.env.PORT || 3000;
