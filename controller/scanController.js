@@ -1,6 +1,90 @@
+// import { analyzeImageBase64 } from "../services/openaiService.js";
+// import { searchEbayCard } from "../services/ebayService.js";
+// import { calculatePrices, buildHistory } from "../services/priceUtils.js";
+
+// export const scanCard = async (req, res) => {
+//     try {
+//         const { image } = req.body;
+
+//         // 0️⃣ Validate input
+//         if (!image || typeof image !== "string" || image.length < 5000) {
+//             return res.status(400).json({
+//                 success: false,
+//                 error: "Invalid or missing image"
+//             });
+//         }
+
+//         console.log("Received image length:", image.length);
+
+//         // 1️⃣ OpenAI Vision (extract card details)
+//         const card = await analyzeImageBase64(image);
+
+//         // 2️⃣ HARD BLOCK: non-baseball cards
+//         if (card?.error === "NOT_BASEBALL_CARD") {
+//             return res.status(400).json({
+//                 success: false,
+//                 error: "Only baseball cards are supported"
+//             });
+//         }
+
+//         // 3️⃣ Safety check: required baseball fields
+//         if (!card.player_name || !card.card_brand) {
+//             return res.status(400).json({
+//                 success: false,
+//                 error: "Invalid baseball card detected"
+//             });
+//         }
+
+//         // 4️⃣ Search eBay
+//         const ebayItems = await searchEbayCard(card);
+
+//         if (!ebayItems || ebayItems.length === 0) {
+//             return res.json({
+//                 success: true,
+//                 card,
+//                 pricing: null,
+//                 history: [],
+//                 message: "No recent sales found on eBay"
+//             });
+//         }
+
+//         // 5️⃣ Pricing + history
+//         const pricing = calculatePrices(ebayItems);
+//         const history = buildHistory(ebayItems);
+
+//         // 6️⃣ Final response
+//         return res.json({
+//             success: true,
+//             card,
+//             pricing,
+//             history
+//         });
+
+//     } catch (error) {
+//         console.error("Scan Error:", error);
+
+//         return res.status(500).json({
+//             success: false,
+//             error: "Scan failed",
+//             details: error.message
+//         });
+//     }
+// };
 import { analyzeImageBase64 } from "../services/openaiService.js";
 import { searchEbayCard } from "../services/ebayService.js";
 import { calculatePrices, buildHistory } from "../services/priceUtils.js";
+
+function filterMatchingItems(items, card) {
+    return items.filter(item => {
+        const title = item.title?.toLowerCase() || "";
+
+        if (card.variant && !title.includes(card.variant.toLowerCase())) return false;
+        if (card.set_name && !title.includes(card.set_name.toLowerCase())) return false;
+        if (card.year && !title.includes(card.year)) return false;
+
+        return true;
+    });
+}
 
 export const scanCard = async (req, res) => {
     try {
@@ -10,32 +94,42 @@ export const scanCard = async (req, res) => {
         if (!image || typeof image !== "string" || image.length < 5000) {
             return res.status(400).json({
                 success: false,
-                error: "Invalid or missing image"
+                error: "Invalid or missing image",
             });
         }
 
         console.log("Received image length:", image.length);
 
-        // 1️⃣ OpenAI Vision (extract card details)
+        // 1️⃣ OpenAI Vision
         const card = await analyzeImageBase64(image);
 
-        // 2️⃣ HARD BLOCK: non-baseball cards
+        // 2️⃣ Block non-baseball
         if (card?.error === "NOT_BASEBALL_CARD") {
             return res.status(400).json({
                 success: false,
-                error: "Only baseball cards are supported"
+                error: "Only baseball cards are supported",
             });
         }
 
-        // 3️⃣ Safety check: required baseball fields
+        // 3️⃣ Required fields
         if (!card.player_name || !card.card_brand) {
             return res.status(400).json({
                 success: false,
-                error: "Invalid baseball card detected"
+                error: "Invalid baseball card detected",
             });
         }
 
-        // 4️⃣ Search eBay
+        // 4️⃣ Confidence gate
+        if (card.confidence < 0.7) {
+            return res.json({
+                success: false,
+                needs_review: true,
+                card,
+                message: "Low confidence match",
+            });
+        }
+
+        // 5️⃣ eBay search (broad)
         const ebayItems = await searchEbayCard(card);
 
         if (!ebayItems || ebayItems.length === 0) {
@@ -44,29 +138,40 @@ export const scanCard = async (req, res) => {
                 card,
                 pricing: null,
                 history: [],
-                message: "No recent sales found on eBay"
+                message: "No eBay results found",
             });
         }
 
-        // 5️⃣ Pricing + history
-        const pricing = calculatePrices(ebayItems);
-        const history = buildHistory(ebayItems);
+        // 6️⃣ FILTER eBay results to exact variant
+        const matchedItems = filterMatchingItems(ebayItems, card);
 
-        // 6️⃣ Final response
+        if (matchedItems.length === 0) {
+            return res.json({
+                success: true,
+                card,
+                pricing: null,
+                history: [],
+                message: "No exact variant matches found",
+            });
+        }
+
+        // 7️⃣ Pricing + history ONLY from matched items
+        const pricing = calculatePrices(matchedItems);
+        const history = buildHistory(matchedItems);
+
         return res.json({
             success: true,
             card,
             pricing,
-            history
+            history,
         });
 
     } catch (error) {
         console.error("Scan Error:", error);
-
         return res.status(500).json({
             success: false,
             error: "Scan failed",
-            details: error.message
+            details: error.message,
         });
     }
 };
