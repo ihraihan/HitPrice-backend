@@ -6,21 +6,54 @@ export const scanCard = async (req, res) => {
     try {
         const { image } = req.body;
 
-        if (!image) {
-            return res.status(400).json({ error: "Image missing" });
+        // 0️⃣ Validate input
+        if (!image || typeof image !== "string" || image.length < 5000) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid or missing image"
+            });
         }
 
-        // 1️⃣ OpenAI Vision
+        console.log("Received image length:", image.length);
+
+        // 1️⃣ OpenAI Vision (extract card details)
         const card = await analyzeImageBase64(image);
 
-        // 2️⃣ eBay search
+        // 2️⃣ HARD BLOCK: non-baseball cards
+        if (card?.error === "NOT_BASEBALL_CARD") {
+            return res.status(400).json({
+                success: false,
+                error: "Only baseball cards are supported"
+            });
+        }
+
+        // 3️⃣ Safety check: required baseball fields
+        if (!card.player_name || !card.card_brand) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid baseball card detected"
+            });
+        }
+
+        // 4️⃣ Search eBay
         const ebayItems = await searchEbayCard(card);
 
-        // 3️⃣ Pricing + history
+        if (!ebayItems || ebayItems.length === 0) {
+            return res.json({
+                success: true,
+                card,
+                pricing: null,
+                history: [],
+                message: "No recent sales found on eBay"
+            });
+        }
+
+        // 5️⃣ Pricing + history
         const pricing = calculatePrices(ebayItems);
         const history = buildHistory(ebayItems);
 
-        res.json({
+        // 6️⃣ Final response
+        return res.json({
             success: true,
             card,
             pricing,
@@ -29,7 +62,9 @@ export const scanCard = async (req, res) => {
 
     } catch (error) {
         console.error("Scan Error:", error);
-        res.status(500).json({
+
+        return res.status(500).json({
+            success: false,
             error: "Scan failed",
             details: error.message
         });

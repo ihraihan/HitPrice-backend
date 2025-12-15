@@ -34,9 +34,29 @@ export async function analyzeImageBase64(base64Image) {
                         {
                             type: "text",
                             text: `
-  Extract baseball card details.
-  Return ONLY valid JSON. No explanation.
-  `
+You are a BASEBALL CARD recognition system.
+
+ONLY process BASEBALL cards.
+
+If the image is NOT a baseball card (e.g. Pokémon, soccer, basketball, TCG),
+return EXACTLY this JSON and nothing else:
+
+{
+  "error": "NOT_BASEBALL_CARD"
+}
+
+If it IS a baseball card, return ONLY valid JSON:
+
+{
+  "player_name": "",
+  "team": "",
+  "card_brand": "",
+  "set_name": "",
+  "card_number": "",
+  "year": "",
+  "confidence": 0.0
+}
+`
                         }
                     ]
                 }
