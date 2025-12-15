@@ -1,51 +1,39 @@
 import { BASEBALL_CATEGORIES } from "../data/baseballCategories.js";
-import { searchEbayRaw, searchEbayByCategory } from "../services/ebayService.js";
+import {
+    searchEbayCategoryPreview,
+    searchEbayCardsByCategory,
+} from "../services/ebayService.js";
 
+// ✅ Categories (dynamic, live from eBay)
 export const getBaseballCategories = async (req, res) => {
     try {
-        res.json({
+        const results = [];
+
+        for (const cat of BASEBALL_CATEGORIES) {
+            const preview = await searchEbayCategoryPreview(cat.query);
+
+            results.push({
+                id: cat.id,
+                title: cat.title,
+                total: preview.total,
+                image: preview.image,
+            });
+        }
+
+        return res.json({
             success: true,
-            categories: BASEBALL_CATEGORIES.map(c => ({
-                id: c.id,
-                title: c.title,
-                total: 0,
-                image: "https://via.placeholder.com/300"
-            })),
+            categories: results,
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to load categories" });
+        console.error("Categories error:", err.message);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to load categories",
+        });
     }
 };
-// // ✅ categories with LIVE preview + count
-// export const getBaseballCategories = async (req, res) => {
-//     try {
-//         const results = [];
 
-//         for (const cat of BASEBALL_CATEGORIES) {
-//             const data = await searchEbayRaw(cat.query, 1);
-
-//             results.push({
-//                 id: cat.id,
-//                 title: cat.title,
-//                 total: data.total || 0,
-//                 image:
-//                     data.itemSummaries?.[0]?.image?.imageUrl ||
-//                     "https://via.placeholder.com/300",
-//             });
-//         }
-
-//         res.json({
-//             success: true,
-//             categories: results,
-//         });
-//     } catch (err) {
-//         console.error("Categories error:", err);
-//         res.status(500).json({ error: "Failed to load categories" });
-//     }
-// };
-
-// ✅ cards inside a category
+// ✅ Cards inside a category
 export const getBaseballCards = async (req, res) => {
     try {
         const { category } = req.query;
@@ -60,9 +48,9 @@ export const getBaseballCards = async (req, res) => {
             return res.status(404).json({ error: "Invalid category" });
         }
 
-        const items = await searchEbayByCategory(cat.query);
+        const items = await searchEbayCardsByCategory(cat.query);
 
-        res.json({
+        return res.json({
             success: true,
             cards: items.map(item => ({
                 title: item.title,
@@ -73,7 +61,10 @@ export const getBaseballCards = async (req, res) => {
             })),
         });
     } catch (err) {
-        console.error("Cards error:", err);
-        res.status(500).json({ error: "Failed to load cards" });
+        console.error("Cards error:", err.message);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to load cards",
+        });
     }
 };
