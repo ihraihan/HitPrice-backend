@@ -52,18 +52,37 @@ export const getCardsByPlayer = async (req, res) => {
 
         // 🔥 HARD FILTER: remove junk listings
         const cards = items.filter(item => {
-            const title = item.title?.toLowerCase() || "";
+            const title = (item.title || "").toLowerCase();
 
-            return (
-                !title.includes("lot") &&
-                !title.includes("pack") &&
-                !title.includes("box") &&
-                !title.includes("sealed") &&
-                !title.includes("digital") &&
-                !title.includes("custom") &&
-                !title.includes("reprint")
-            );
+            // ❌ Hard block junk listings
+            const blockedWords = [
+                "lot",
+                "pack",
+                "box",
+                "sealed",
+                "complete your set",
+                "complete set",
+                "set of",
+                "you pick",
+                "pick",
+                "singles",
+                "base set",
+                "factory sealed",
+                "reprint"
+            ];
+
+            if (blockedWords.some(word => title.includes(word))) {
+                return false;
+            }
+
+            // ✅ STEP 3: require YEAR or CARD NUMBER
+            const hasYear = /(19|20)\d{2}/.test(title);       // 1952, 2024, etc
+            const hasCardNumber = /(#|no\.?)\s?\d+/i.test(title); // #311, No. 156
+
+            return hasYear || hasCardNumber;
         });
+
+
 
         return res.json({
             success: true,
