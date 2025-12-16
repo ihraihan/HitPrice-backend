@@ -1,6 +1,8 @@
 import { BASEBALL_SERIES } from "../data/baseballSeries.js";
 import { discoverBaseballSetsByBrand, searchEbayCardsByCategory } from "../services/ebayService.js";
 
+
+
 // 🔹 SERIES (Brand grid)
 export const getBaseballSeries = (req, res) => {
     res.json({
@@ -32,37 +34,43 @@ export const getBaseballSets = async (req, res) => {
 
 
 // ✅ Cards inside a category
-export const getBaseballCards = async (req, res) => {
+export const getCardsByBrand = async (req, res) => {
     try {
-        const { category } = req.query;
+        const { brand } = req.query;
 
-        if (!category) {
-            return res.status(400).json({ error: "Category required" });
+        if (!brand) {
+            return res.status(400).json({ error: "Brand required" });
         }
 
-        const cat = BASEBALL_CATEGORIES.find(c => c.id === category);
+        const items = await searchEbayCardsByCategory(
+            `${brand} baseball card`
+        );
 
-        if (!cat) {
-            return res.status(404).json({ error: "Invalid category" });
-        }
-
-        const items = await searchEbayCardsByCategory(cat.query);
+        // 🔥 FILTER OUT PACKS / LOTS
+        const cards = items.filter(item => {
+            const title = item.title?.toLowerCase() || "";
+            return (
+                !title.includes("lot") &&
+                !title.includes("pack") &&
+                !title.includes("box") &&
+                !title.includes("sealed")
+            );
+        });
 
         return res.json({
             success: true,
-            cards: items.map(item => ({
+            cards: cards.map(item => ({
                 title: item.title,
-                price: item.price?.value,
-                currency: item.price?.currency,
-                image: item.image?.imageUrl,
+                image: item.image?.imageUrl ?? "",
+                price: item.price?.value ?? null,
+                currency: item.price?.currency ?? null,
                 ebay_url: item.itemWebUrl,
             })),
         });
+
     } catch (err) {
-        console.error("Cards error:", err.message);
-        return res.status(500).json({
-            success: false,
-            error: "Failed to load cards",
-        });
+        console.error("Brand cards error:", err.message);
+        return res.status(500).json({ error: "Failed to load cards" });
     }
 };
+

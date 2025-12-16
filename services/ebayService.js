@@ -74,6 +74,7 @@ export async function searchEbayCardsByCategory(query) {
     return response.data.itemSummaries || [];
 }
 
+
 // ✅ KEEP THIS ONE
 export async function discoverBaseballSetsByBrand(brand) {
     const token = await getEbayAccessToken();
