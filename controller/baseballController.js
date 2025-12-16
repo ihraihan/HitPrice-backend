@@ -1,4 +1,4 @@
-import { BASEBALL_SERIES } from "../data/baseballSeries.js";
+import { BASEBALL_PLAYERS } from "../data/baseballPlayers.js";
 import { discoverBaseballSetsByBrand, searchEbayCardsByCategory } from "../services/ebayService.js";
 
 
@@ -7,7 +7,7 @@ import { discoverBaseballSetsByBrand, searchEbayCardsByCategory } from "../servi
 export const getBaseballSeries = (req, res) => {
     res.json({
         success: true,
-        series: BASEBALL_SERIES,
+        series: BASEBALL_PLAYERS,
     });
 };
 
@@ -34,31 +34,41 @@ export const getBaseballSets = async (req, res) => {
 
 
 // ✅ Cards inside a category
-export const getCardsByBrand = async (req, res) => {
+// ✅ Cards by player (clean + safe)
+export const getCardsByPlayer = async (req, res) => {
     try {
-        const { brand } = req.query;
+        const { player } = req.query;
 
-        if (!brand) {
-            return res.status(400).json({ error: "Brand required" });
+        if (!player || player.length < 3) {
+            return res.status(400).json({
+                success: false,
+                error: "Valid player name required",
+            });
         }
 
         const items = await searchEbayCardsByCategory(
-            `${brand} baseball card`
+            `${player} baseball card`
         );
 
-        // 🔥 FILTER OUT PACKS / LOTS
+        // 🔥 HARD FILTER: remove junk listings
         const cards = items.filter(item => {
             const title = item.title?.toLowerCase() || "";
+
             return (
                 !title.includes("lot") &&
                 !title.includes("pack") &&
                 !title.includes("box") &&
-                !title.includes("sealed")
+                !title.includes("sealed") &&
+                !title.includes("digital") &&
+                !title.includes("custom") &&
+                !title.includes("reprint")
             );
         });
 
         return res.json({
             success: true,
+            player,
+            total: cards.length,
             cards: cards.map(item => ({
                 title: item.title,
                 image: item.image?.imageUrl ?? "",
@@ -69,8 +79,10 @@ export const getCardsByBrand = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Brand cards error:", err.message);
-        return res.status(500).json({ error: "Failed to load cards" });
+        console.error("Player cards error:", err.message);
+        return res.status(500).json({
+            success: false,
+            error: "Failed to load player cards",
+        });
     }
 };
-
