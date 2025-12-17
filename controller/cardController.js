@@ -1,51 +1,49 @@
-import { searchEbayCardsByCategory } from "../services/ebayService.js";
+import { searchEbayByQuery } from "../services/ebayService.js";
 import { calculatePrices, buildHistory } from "../services/priceUtils.js";
 
 export const lookupCard = async (req, res) => {
     try {
-        const { player_name, card_brand, year, card_number } = req.body;
+        const { player, brand, set_name, variant, year } = req.body;
 
-        if (!player_name || !card_brand) {
-            return res.status(400).json({ error: "Missing card data" });
+        if (!player || !brand) {
+            return res.status(400).json({ error: "player and brand required" });
         }
 
-        const queryParts = [
-            player_name,
-            card_brand,
-            year,
-            card_number,
-            "baseball card",
-        ].filter(Boolean);
+        // 🔥 BUILD FLEXIBLE QUERY
+        let query = `${player} ${brand} baseball card`;
 
-        const query = queryParts.join(" ");
+        if (set_name) query += ` ${set_name}`;
+        if (variant) query += ` ${variant}`;
+        if (year) query += ` ${year}`;
 
-        const items = await searchEbayCardsByCategory(query);
+        const items = await searchEbayByQuery(query);
 
         if (!items.length) {
             return res.json({
-                card: {
-                    player_name,
-                    card_brand,
-                    year,
-                    card_number,
-                },
-                pricing: null,
-                history: [],
+                success: false,
+                message: "No cards found",
             });
         }
 
+        const pricing = calculatePrices(items);
+        const history = buildHistory(items);
+
         return res.json({
+            success: true,
             card: {
-                player_name,
-                card_brand,
+                player_name: player,
+                card_brand: brand,
+                set_name,
+                variant,
                 year,
-                card_number,
             },
-            pricing: calculatePrices(items),
-            history: buildHistory(items),
+            pricing,
+            history,
         });
+
     } catch (err) {
         console.error("Lookup error:", err);
         res.status(500).json({ error: "Lookup failed" });
     }
 };
+

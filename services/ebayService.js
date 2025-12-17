@@ -1,6 +1,34 @@
 import axios from "axios";
 import { getEbayAccessToken } from "./ebayAuthService.js"; // ✅ FIX
 
+
+export async function searchEbayByQuery(query, limit = 25) {
+    const token = await getEbayAccessToken();
+
+    if (!query || typeof query !== "string") {
+        throw new Error("Invalid eBay search query");
+    }
+
+    const response = await axios.get(
+        "https://api.ebay.com/buy/browse/v1/item_summary/search",
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+            },
+            params: {
+                q: query,
+                category_ids: "213", // Baseball Cards
+                filter: "soldItems:true",
+                limit,
+                sort: "endedTime",
+            },
+        }
+    );
+
+    return response.data?.itemSummaries || [];
+}
+
 export async function searchEbayCard(card) {
     const token = await getEbayAccessToken();
 
