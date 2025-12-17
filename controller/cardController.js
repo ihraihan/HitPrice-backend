@@ -1,5 +1,5 @@
-import { searchEbayByQuery } from "../services/ebayService.js";
-import { calculatePrices, buildHistory } from "../services/priceUtils.js";
+// import { searchEbayByQuery } from "../services/ebayService.js";
+// import { calculatePrices, buildHistory } from "../services/priceUtils.js";
 
 // export const lookupCard = async (req, res) => {
 //     try {
